@@ -11,9 +11,13 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
+    "ffmpeg": "^0.0.4",
+    "fluent-ffmpeg": "^2.1.2",
     "path": "^0.12.7",
+    "record-screen": "^3.19.0",
     "screenshot-desktop": "^1.15.0",
     "sharp": "^0.33.1",
-    "socket.io": "^4.7.3"
+    "socket.io": "^4.7.3",
+    "videostream": "^3.2.2"
   }
 }
