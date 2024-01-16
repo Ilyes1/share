@@ -36,7 +36,7 @@ io.on('connection', (socket) => {
             // Handle errors
             console.error('Error capturing screenshot:', err);
           });
-      }, 100); // Capture more frequently (every 100 milliseconds in this example)
+      }, 300); // Capture more frequently (every 100 milliseconds in this example)
     }
   });
 
