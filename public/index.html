@@ -1,30 +1,86 @@
-
 <!DOCTYPE html>
-<html>
-    <head>
-        <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" integrity="sha384-mZLF4UVrpi/QTWPA7BjNPEnkIfRFn4ZEO3Qt/HFklTJBj/gBOV8G3HcKn4NfQblz" crossorigin="anonymous"></script>
-        <title>Share screen</title>
-    </head>
-    <body>
-        
-        <button id="screen">Share</button>
-        <img id="screenImg" width="400" height="200" src="" alt="">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Chat App</title>
+</head>
+<body>
+    <h1>Video Chat App</h1>
 
+    <video id="localVideo" autoplay playsinline></video>
+    <video id="remoteVideo" autoplay playsinline></video>
 
-        <script src="./jquery.js"></script>
-        <script>
-            $(document).ready(function() {
-                const socket = io();
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" integrity="sha384-mZLF4UVrpi/QTWPA7BjNPEnkIfRFn4ZEO3Qt/HFklTJBj/gBOV8G3HcKn4NfQblz" crossorigin="anonymous"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <script>
+        const socket = io();
 
-                $('#screen').click(function() {
-                    socket.emit('screen')
-                })
+        const localVideo = document.getElementById('localVideo');
+        const remoteVideo = document.getElementById('remoteVideo');
 
-                socket.on('image', (data) => {
-                    $('#screenImg').attr('src', `data:image/jpeg;base64,${data.data}`)
-                })
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+            .then((stream) => {
+                localVideo.srcObject = stream;
 
+                socket.emit('offer', stream);
+
+                socket.on('answer', (answer) => {
+                    handleAnswer(answer);
+                });
+
+                socket.on('ice-candidate', (candidate) => {
+                    handleIceCandidate(candidate);
+                });
             })
-        </script>
-    </body>
+            .catch((error) => {
+                console.error('Error accessing media devices:', error);
+            });
+
+        socket.on('offer', (offer) => {
+            handleOffer(offer);
+        });
+
+        function handleOffer(offer) {
+            const peerConnection = new RTCPeerConnection();
+
+            peerConnection.onicecandidate = (event) => {
+                if (event.candidate) {
+                    socket.emit('ice-candidate', event.candidate);
+                }
+            };
+
+            peerConnection.ontrack = (event) => {
+                remoteVideo.srcObject = event.streams[0];
+            };
+
+            peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
+                .then(() => peerConnection.createAnswer())
+                .then((answer) => peerConnection.setLocalDescription(answer))
+                .then(() => {
+                    socket.emit('answer', peerConnection.localDescription);
+                })
+                .catch((error) => {
+                    console.error('Error creating answer:', error);
+                });
+        }
+
+        function handleAnswer(answer) {
+            const remoteDescription = new RTCSessionDescription(answer);
+            peerConnection.setRemoteDescription(remoteDescription)
+                .catch((error) => {
+                    console.error('Error setting remote description:', error);
+                });
+        }
+
+        function handleIceCandidate(candidate) {
+            const iceCandidate = new RTCIceCandidate(candidate);
+            peerConnection.addIceCandidate(iceCandidate)
+                .catch((error) => {
+                    console.error('Error adding ICE candidate:', error);
+                });
+        }
+
+    </script>
+</body>
 </html>

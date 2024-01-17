@@ -1,49 +1,34 @@
 const express = require('express');
 const http = require('http');
-const path = require('path');
 const socketIo = require('socket.io');
-const screenshot = require('screenshot-desktop');
-const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
 
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Handle root route
-app.get('/', (req, res) => {
-  // Send the index.html file
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+app.use(express.static('public'));
 
 io.on('connection', (socket) => {
-  console.log('A user connected');
+    console.log('User connected');
 
-  let captureInterval;
+    socket.on('disconnect', () => {
+        console.log('User disconnected');
+    });
 
-  socket.on('screen', () => {
-    if (!captureInterval) {
-      captureInterval = setInterval(() => {
-        screenshot({ filename: 'name.png' })
-          .then((img) => {
-            const imageBuffer = fs.readFileSync(img);
-            const base64Image = imageBuffer.toString('base64');
-  
-            socket.broadcast.emit('image', { data: base64Image }); // Use 'emit' for a direct response to the requester
-          })
-          .catch((err) => {
-            // Handle errors
-            console.error('Error capturing screenshot:', err);
-          });
-      }, 300); // Capture more frequently (every 100 milliseconds in this example)
-    }
-  });
+    socket.on('offer', (offer) => {
+        socket.broadcast.emit('offer', offer);
+    });
 
-  socket.on('disconnect', () => {
-    console.log('User disconnected');
-    clearInterval(captureInterval);
-  });
+    socket.on('answer', (answer) => {
+        socket.broadcast.emit('answer', answer);
+    });
+
+    socket.on('ice-candidate', (candidate) => {
+        socket.broadcast.emit('ice-candidate', candidate);
+    });
 });
 
-server.listen(process.env.PORT || 5000);
+const PORT = process.env.PORT || 5000;
+server.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
+});
