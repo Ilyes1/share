@@ -6,39 +6,64 @@
     <title>Video Chat App</title>
 </head>
 <body>
-    <h1>Video Chat App</h1>
+    <video id="localVideo" autoplay playsinline width="300"></video>
+    <video id="remoteVideo" autoplay playsinline width="300"></video>
 
-    <video id="localVideo" autoplay playsinline></video>
-    <video id="remoteVideo" autoplay playsinline></video>
+    <button id="startScreenShare">Start Screen Share</button>
+    <button id="stopScreenShare">Stop Screen Share</button>
 
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" integrity="sha384-mZLF4UVrpi/QTWPA7BjNPEnkIfRFn4ZEO3Qt/HFklTJBj/gBOV8G3HcKn4NfQblz" crossorigin="anonymous"></script>
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
     <script>
+        // public/app.js
+
         const socket = io();
+        let localStream;
+        let screenSharing = false;
 
         const localVideo = document.getElementById('localVideo');
         const remoteVideo = document.getElementById('remoteVideo');
+        const startScreenShareBtn = document.getElementById('startScreenShare');
+        const stopScreenShareBtn = document.getElementById('stopScreenShare');
 
-        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
-            .then((stream) => {
-                localVideo.srcObject = stream;
+        startScreenShareBtn.addEventListener('click', startScreenShare);
+        stopScreenShareBtn.addEventListener('click', stopScreenShare);
 
-                socket.emit('offer', stream);
+        function startScreenShare() {
+            navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
+                .then((stream) => {
+                    localStream = stream;
+                    localVideo.srcObject = stream;
+                    screenSharing = true;
 
-                socket.on('answer', (answer) => {
-                    handleAnswer(answer);
+                    socket.emit('offer', stream);
+
+                    socket.on('answer', (answer) => {
+                        handleAnswer(answer);
+                    });
+
+                    socket.on('ice-candidate', (candidate) => {
+                        handleIceCandidate(candidate);
+                    });
+                })
+                .catch((error) => {
+                    console.error('Error accessing screen sharing:', error);
                 });
+        }
 
-                socket.on('ice-candidate', (candidate) => {
-                    handleIceCandidate(candidate);
-                });
-            })
-            .catch((error) => {
-                console.error('Error accessing media devices:', error);
-            });
+        function stopScreenShare() {
+            if (localStream) {
+                localStream.getTracks().forEach(track => track.stop());
+                localVideo.srcObject = null;
+                screenSharing = false;
+                socket.emit('stop-share');
+            }
+        }
 
         socket.on('offer', (offer) => {
-            handleOffer(offer);
+            if (!screenSharing) {
+                handleOffer(offer);
+            }
         });
 
         function handleOffer(offer) {
