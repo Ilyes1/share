@@ -11,23 +11,38 @@ const io = socketIo(server);
 app.use(express.static('public'));
 
 let screenshotPath = 'screenshot.png';
+let screenshotInterval;
 
 io.on('connection', (socket) => {
     console.log('User connected');
 
-    socket.on('start-share', async () => {
-        const screenshotData = await takeScreenshot();
-        io.emit('screenshot', screenshotData);
+    socket.on('start-share', () => {
+        // Send a screenshot every 50 milliseconds
+        screenshotInterval = setInterval(async () => {
+            const screenshotData = await takeScreenshot();
+            io.emit('screenshot', screenshotData);
+        }, 2000);
+    });
+
+    socket.on('stop-share', () => {
+        // Stop sending screenshots when requested
+        if (screenshotInterval) {
+            clearInterval(screenshotInterval);
+        }
     });
 
     socket.on('disconnect', () => {
         console.log('User disconnected');
+        // Stop sending screenshots when a user disconnects
+        if (screenshotInterval) {
+            clearInterval(screenshotInterval);
+        }
     });
 });
 
 async function takeScreenshot() {
     return new Promise((resolve, reject) => {
-        screenshot(screenshotPath, function(error, complete) {
+        screenshot(screenshotPath, function (error, complete) {
             if (error) {
                 console.error('Error taking screenshot:', error);
                 reject(error);
