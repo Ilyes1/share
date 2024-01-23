@@ -10,14 +10,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "desktop-screenshot": "^0.1.1",
     "express": "^4.18.2",
     "ffmpeg": "^0.0.4",
     "fluent-ffmpeg": "^2.1.2",
+    "node-schedule": "^2.1.1",
     "path": "^0.12.7",
+    "puppeteer": "^21.7.0",
     "record-screen": "^3.19.0",
     "screenshot-desktop": "^1.15.0",
     "sharp": "^0.33.1",
-    "socket.io": "^4.7.3",
+    "socket.io": "^4.7.4",
     "videostream": "^3.2.2"
   }
 }

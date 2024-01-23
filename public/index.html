@@ -1,111 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Chat App</title>
+    <title>Screen Sharing App</title>
 </head>
+
 <body>
-    <video id="localVideo" autoplay playsinline width="300"></video>
-    <video id="remoteVideo" autoplay playsinline width="300"></video>
 
-    <button id="startScreenShare">Start Screen Share</button>
-    <button id="stopScreenShare">Stop Screen Share</button>
+    <style>
+        img {
+            width: 400px;
+        }
+    </style>
 
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js" integrity="sha384-mZLF4UVrpi/QTWPA7BjNPEnkIfRFn4ZEO3Qt/HFklTJBj/gBOV8G3HcKn4NfQblz" crossorigin="anonymous"></script>
-    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+    <button id="shareScreen">Share Screen</button>
+    <!-- <div id="screenshots"></div> -->
+    <img src="" alt="">
+
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
     <script>
-        // public/app.js
-
         const socket = io();
-        let localStream;
-        let screenSharing = false;
 
-        const localVideo = document.getElementById('localVideo');
-        const remoteVideo = document.getElementById('remoteVideo');
-        const startScreenShareBtn = document.getElementById('startScreenShare');
-        const stopScreenShareBtn = document.getElementById('stopScreenShare');
-
-        startScreenShareBtn.addEventListener('click', startScreenShare);
-        stopScreenShareBtn.addEventListener('click', stopScreenShare);
-
-        function startScreenShare() {
-            navigator.mediaDevices.getDisplayMedia({ video: true, audio: true })
-                .then((stream) => {
-                    localStream = stream;
-                    localVideo.srcObject = stream;
-                    screenSharing = true;
-
-                    socket.emit('offer', stream);
-
-                    socket.on('answer', (answer) => {
-                        handleAnswer(answer);
-                    });
-
-                    socket.on('ice-candidate', (candidate) => {
-                        handleIceCandidate(candidate);
-                    });
-                })
-                .catch((error) => {
-                    console.error('Error accessing screen sharing:', error);
-                });
-        }
-
-        function stopScreenShare() {
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-                localVideo.srcObject = null;
-                screenSharing = false;
-                socket.emit('stop-share');
-            }
-        }
-
-        socket.on('offer', (offer) => {
-            if (!screenSharing) {
-                handleOffer(offer);
-            }
+        document.getElementById('shareScreen').addEventListener('click', () => {
+            socket.emit('start-share');
         });
 
-        function handleOffer(offer) {
-            const peerConnection = new RTCPeerConnection();
-
-            peerConnection.onicecandidate = (event) => {
-                if (event.candidate) {
-                    socket.emit('ice-candidate', event.candidate);
-                }
-            };
-
-            peerConnection.ontrack = (event) => {
-                remoteVideo.srcObject = event.streams[0];
-            };
-
-            peerConnection.setRemoteDescription(new RTCSessionDescription(offer))
-                .then(() => peerConnection.createAnswer())
-                .then((answer) => peerConnection.setLocalDescription(answer))
-                .then(() => {
-                    socket.emit('answer', peerConnection.localDescription);
-                })
-                .catch((error) => {
-                    console.error('Error creating answer:', error);
-                });
-        }
-
-        function handleAnswer(answer) {
-            const remoteDescription = new RTCSessionDescription(answer);
-            peerConnection.setRemoteDescription(remoteDescription)
-                .catch((error) => {
-                    console.error('Error setting remote description:', error);
-                });
-        }
-
-        function handleIceCandidate(candidate) {
-            const iceCandidate = new RTCIceCandidate(candidate);
-            peerConnection.addIceCandidate(iceCandidate)
-                .catch((error) => {
-                    console.error('Error adding ICE candidate:', error);
-                });
-        }
-
+        socket.on('screenshot', (data) => {
+            // const img = new Image();
+            // img.src = `data:image/png;base64, ${data}`;
+            // document.getElementById('screenshots').appendChild(img);
+            const img = document.querySelector('img')
+            img.src = `data:image/png;base64, ${data}`
+        });
     </script>
 </body>
+
 </html>
