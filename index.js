@@ -18,11 +18,10 @@ io.on('connection', (socket) => {
 
     socket.on('start-share', () => {
         // Send a screenshot every 50 milliseconds
-        // screenshotInterval = setInterval(async () => {
-        //     const screenshotData = await takeScreenshot();
-        //     io.emit('screenshot', screenshotData);
-        // }, 2000);
-        io.emit('screenshot', 'screenshotData');
+        screenshotInterval = setInterval(async () => {
+            const screenshotData = await takeScreenshot();
+            io.emit('screenshot', screenshotData);
+        }, 2000);
     });
 
     socket.on('stop-share', () => {

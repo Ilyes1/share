@@ -20,7 +20,7 @@
     <img src="" alt="">
     <h2></h2>
 
-    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.4/socket.io.js" integrity="sha512-tE1z+95+lMCGwy+9PnKgUSIeHhvioC9lMlI7rLWU0Ps3XTdjRygLcy4mLuL0JAoK4TLdQEyP0yOl/9dMOqpH/Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script>
         const socket = io();
 
@@ -32,10 +32,10 @@
             // const img = new Image();
             // img.src = `data:image/png;base64, ${data}`;
             // document.getElementById('screenshots').appendChild(img);
-            const title = document.querySelector('h2')
-            title.innerText = data
-            // const img = document.querySelector('img')
-            // img.src = `data:image/png;base64, ${data}`
+            // const title = document.querySelector('h2')
+            // title.innerText = data
+            const img = document.querySelector('img')
+            img.src = `data:image/png;base64, ${data}`
         });
     </script>
 </body>
